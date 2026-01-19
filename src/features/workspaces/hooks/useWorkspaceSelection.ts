@@ -31,7 +31,8 @@ export function useWorkspaceSelection({
 }: UseWorkspaceSelectionOptions): UseWorkspaceSelectionResult {
   const exitDiffView = useCallback(() => {
     setCenterMode("chat");
-  }, [setCenterMode]);
+    setSelectedDiffPath(null);
+  }, [setCenterMode, setSelectedDiffPath]);
 
   const selectWorkspace = useCallback(
     (workspaceId: string) => {
