@@ -52,6 +52,7 @@ export function useWorkspaceSelection({
       isCompact,
       setActiveTab,
       setActiveWorkspaceId,
+      setSelectedDiffPath,
       updateWorkspaceSettings,
       workspaces,
     ],
