@@ -1040,37 +1040,28 @@ function MainApp() {
     listThreadsForWorkspace
   });
 
-  const handleWorkspaceAdded = useCallback(
-    (workspace: WorkspaceInfo) => {
-      setActiveThreadId(null, workspace.id);
-      if (isCompact) {
-        setActiveTab("codex");
-      }
-    },
-    [isCompact, setActiveTab, setActiveThreadId],
-  );
-
-  const handleAddWorkspaceFromPath = useCallback(
-    async (path: string) => {
-      try {
-        const workspace = await addWorkspaceFromPath(path);
-        if (workspace) {
-          handleWorkspaceAdded(workspace);
-        }
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        addDebugEntry({
-          id: `${Date.now()}-client-add-workspace-error`,
-          timestamp: Date.now(),
-          source: "error",
-          label: "workspace/add error",
-          payload: message
-        });
-        alert(`Failed to add workspace.\n\n${message}`);
-      }
-    },
-    [addDebugEntry, addWorkspaceFromPath, handleWorkspaceAdded],
-  );
+  const {
+    handleAddWorkspace,
+    handleAddWorkspaceFromPath,
+    handleAddAgent,
+    handleAddWorktreeAgent,
+    handleAddCloneAgent,
+  } = useWorkspaceActions({
+    activeWorkspace,
+    isCompact,
+    addWorkspace,
+    addWorkspaceFromPath,
+    connectWorkspace,
+    startThreadForWorkspace,
+    setActiveThreadId,
+    setActiveTab,
+    exitDiffView,
+    selectWorkspace,
+    openWorktreePrompt,
+    openClonePrompt,
+    composerInputRef,
+    onDebug: addDebugEntry,
+  });
 
   const handleDropWorkspacePaths = useCallback(
     async (paths: string[]) => {
@@ -1096,27 +1087,6 @@ function MainApp() {
     handleDrop: handleWorkspaceDrop,
   } = useWorkspaceDropZone({
     onDropPaths: handleDropWorkspacePaths,
-  });
-
-  const {
-    handleAddWorkspace,
-    handleAddAgent,
-    handleAddWorktreeAgent,
-    handleAddCloneAgent,
-  } = useWorkspaceActions({
-    activeWorkspace,
-    isCompact,
-    addWorkspace,
-    connectWorkspace,
-    startThreadForWorkspace,
-    setActiveThreadId,
-    setActiveTab,
-    exitDiffView,
-    selectWorkspace,
-    openWorktreePrompt,
-    openClonePrompt,
-    composerInputRef,
-    onDebug: addDebugEntry,
   });
 
   const {
