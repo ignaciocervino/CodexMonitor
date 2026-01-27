@@ -99,11 +99,16 @@ export function usePromptHistory({
       writeStoredHistory(activeKey, nextHistory);
       writeStoredHistory(previousKey, []);
     }
-    setHistoryByKey((prev) => ({
-      ...prev,
-      [activeKey]: nextHistory,
-      ...(shouldMigrateDefault ? { [previousKey]: [] } : {}),
-    }));
+    setHistoryByKey((prev) => {
+      const existingActive = prev[activeKey];
+      const alreadyLoaded = loadedKeysRef.current.has(activeKey);
+      return {
+        ...prev,
+        // Avoid clobbering in-memory history with stale storage when switching keys quickly.
+        [activeKey]: alreadyLoaded && existingActive ? existingActive : nextHistory,
+        ...(shouldMigrateDefault ? { [previousKey]: [] } : {}),
+      };
+    });
     loadedKeysRef.current.add(activeKey);
     skipNextWriteRef.current = true;
     setHistoryIndex(null);
@@ -131,15 +136,24 @@ export function usePromptHistory({
       if (!trimmed) {
         return;
       }
+      const existing = historyByKeyRef.current[activeKey] ?? [];
+      if (existing[existing.length - 1] === trimmed) {
+        return;
+      }
+      const next = [...existing, trimmed].slice(-HISTORY_LIMIT);
+      // Persist synchronously to avoid losing entries on fast key switches.
+      writeStoredHistory(activeKey, next);
+      loadedKeysRef.current.add(activeKey);
       setHistoryByKey((prev) => {
-        const existing = prev[activeKey] ?? [];
-        if (existing[existing.length - 1] === trimmed) {
+        const current = prev[activeKey] ?? [];
+        if (current[current.length - 1] === trimmed) {
           return prev;
         }
-        const next = [...existing, trimmed].slice(-HISTORY_LIMIT);
+        // Merge with any concurrent updates by recomputing from current state.
+        const mergedNext = [...current, trimmed].slice(-HISTORY_LIMIT);
         return {
           ...prev,
-          [activeKey]: next,
+          [activeKey]: mergedNext,
         };
       });
     },
